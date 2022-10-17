@@ -1,0 +1,340 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "instancePrefix": {
+      "type": "string",
+      "defaultValue": "gpu",
+      "metadata": {
+        "description": "instance name"
+      }
+    },
+    "instanceSSHPort": {
+      "type": "int",
+      "defaultValue": 22,
+      "metadata": {
+        "description": "Port number for SSH access"
+      }
+    },
+    "instanceManagementAllowedSourceAddressPrefixes": {
+      "type": "array",
+      "defaultValue": ["*"],
+      "metadata": {
+        "description": "Allowed IP address(es) for SSH access"
+      }
+    },
+    "instanceIngressAllowedSourceAddressPrefixes": {
+      "type": "array",
+      "defaultValue": ["*"],
+      "metadata": {
+        "description": "Allowed IP address(es) for HTTP(S) access to ingress"
+      }
+    },
+    "instanceSize": {
+      "type": "string",
+      "defaultValue": "Standard_NV6ads_A10_v5",
+      "metadata": {
+        "description": "instance instance size"
+      },
+      "allowedValues": [
+        "Standard_B1ls",
+        "Standard_B1ms",
+        "Standard_B1s",
+        "Standard_B2ms",
+        "Standard_B2s",
+        "Standard_B4ms",
+        "Standard_B8ms",
+        "Standard_NV6ads_A10_v5"
+      ]
+    },
+    "instancePriority": {
+      "type": "string",
+      "defaultValue": "Spot",
+      "allowedValues": [
+        "Low",
+        "Regular",
+        "Spot"
+      ],
+      "metadata": {
+        "description": "Instance priority"
+      }
+    },
+    "enableNVIDIA": {
+      "type": "string",
+      "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
+      "metadata": {
+        "description": "Whether or not these machines will require an NVIDIA-compatible image"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "admin",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPublicKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "ssh public key for connecting to VM"
+      }
+    },
+    "instanceCustomData": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Base64 encoded, multi-line string to pass to cloud-init"
+      }
+    },
+    "saType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage account type"
+      }
+    },
+    "diskType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "StandardSSD_LRS",
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "OS disk type"
+      }
+    },
+    "diskSizeGB": {
+      "type": "int",
+      "defaultValue": 32,
+      "allowedValues": [
+        32,
+        64,
+        128
+      ],
+      "metadata": {
+        "description": "OS disk size"
+      }
+    },
+    "diagsSASProperties": {
+      "type": "object",
+      "defaultValue": {
+        "signedServices": "bt",
+        "signedPermission": "rwlacu",
+        "signedStart": "[utcNow('yyyy-MM-ddTHH:mm:ssZ')]",
+        "signedExpiry": "[replace(utcNow('yyyy-MM-ddTHH:mm:ssZ'), utcNow('yyyy'), string(add(10,int(utcNow('yyyy')))))]",
+        "signedResourceTypes": "co"
+      },
+      "metadata": {
+        "description": "SAS token with 10-year lifetime for Linux diagnostics - currently unused until we re-enable extensions"
+      }
+    }
+  },
+  "variables": {
+    "managedIdentityName": "[parameters('instancePrefix')]",
+    "diagsName": "[toLower(substring(concat('diags0',  uniqueString(resourceGroup().id)), 0, 16))]",
+    "virtualMachineContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '9980e02c-c2be-4d73-94e8-173b1dc7cf3c')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagsName')]",
+      "sku": {
+        "name": "[parameters('saType')]"
+      },
+      "kind": "StorageV2",
+      "apiVersion": "2019-04-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "comments": "Virtual Network",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "cluster",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/8"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "instances",
+            "properties": {
+              "addressPrefix": "10.1.0.0/16"
+            }
+          },
+          {
+            "name": "agents",
+            "properties": {
+              "addressPrefix": "10.2.0.0/16"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "instance Node(s)",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('instancePrefix'))]",
+      "apiVersion": "2019-03-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "osProfile": {
+          "computerName": "[parameters('instancePrefix')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "customData": "[parameters('instanceCustomData')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('adminPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('instanceSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "[if(equals(parameters('enableNVIDIA'),'true'), ' 0001-com-ubuntu-minimal-bionic','0001-com-ubuntu-minimal-jammy')]",
+            "sku": "[if(equals(parameters('enableNVIDIA'),'true'), 'minimal-18_04-lts-gen2','minimal-22_04-lts-gen2')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[parameters('instancePrefix')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('diskType')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('diskSizeGB')]"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('instancePrefix'))]"
+            }
+          ]
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'compute')]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', variables('diagsName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', 'cluster')]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('instancePrefix'), copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', 'masters')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "compute",
+      "sku": {
+        "name": "Aligned"
+      },
+      "apiVersion": "2019-03-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformFaultDomainCount": 1,
+        "platformUpdateDomainCount": 1
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('instancePrefix'))]",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "primary": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'cluster'), '/subnets/', 'compute')]"
+              },
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat('10.1.0.1')]",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('instancePrefix'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('instancePrefix'))]"
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', 'compute')]",
+        "[concat('Microsoft.Network/publicIpAddresses/', parameters('instancePrefix'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('instancePrefix'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('instancePrefix')]",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(resourceGroup().name, '-', parameters('instancePrefix'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('instancePrefix')]",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefixes": "[parameters('instanceManagementAllowedSourceAddressPrefixes')]",
+              "protocol": "Tcp",
+              "destinationPortRange": "[parameters('instanceSSHPort')]",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
