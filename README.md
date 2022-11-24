@@ -6,7 +6,7 @@ A quick hack to run Stable Diffusion on an Azure GPU Spot Instance.
 
 This is an Azure Resource Manager template that automatically deploys a GPU enabled spot atop Ubuntu 20.04. 
 
-The template defaults to deploying NV6 Series VMs (`Standard_NV6ads_A10_v5`) with the smallest possible managed disk size (S4, 32GB). It also deploys (and mounts) an Azure File Share on the machine with (very) permissive access at `/srv`, which makes it quite easy to keep copies of your work between VM instantiations.
+The template defaults to deploying NV6 Series VMs (`Standard_NV6` or, if you can get them, `Standard_NV6ads_A10_v5`) with the smallest possible managed SSD disk size (P4, 32GB). It also deploys (and mounts) an Azure File Share on the machine with (very) permissive access at `/srv`, which makes it quite easy to keep copies of your work between VM instantiations.
 
 ## Why
 
@@ -14,7 +14,8 @@ I was getting a little bored with the notebook workflow in [Google Collab][colla
 
 ## Roadmap
 
-* [x] change `cloud-config` for a single spot instance
+* [ ] change instance type to `Spot` for lower cost
+* [x] Install NVIDIA drivers and CUDA toolkit
 * [x] remove unused packages from `cloud-config`
 * [x] remove unnecessary commands from `Makefile`
 * [x] remove unnecessary files from repo and trim history
@@ -71,7 +72,7 @@ Although it is possible to run machines like `Standard_NV6ads_A10_v5` as spot in
 
 ## Disclaimers
 
-Keep in mind that this was written for conciseness and ease of experimentation -- look to AKS for a production service.
+Keep in mind that this was written for conciseness and ease of experimentation -- this is not meant to be used as a production service.
 
 [k3s]: https://github.com/rcarmo/azure-k3s-cluster
 [d]: http://docker.com

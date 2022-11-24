@@ -4,7 +4,7 @@
   "parameters": {
     "instancePrefix": {
       "type": "string",
-      "defaultValue": "gpu",
+      "defaultValue": "ubuntu",
       "metadata": {
         "description": "instance name"
       }
@@ -23,27 +23,14 @@
         "description": "Allowed IP address(es) for SSH access"
       }
     },
-    "instanceIngressAllowedSourceAddressPrefixes": {
-      "type": "array",
-      "defaultValue": ["*"],
-      "metadata": {
-        "description": "Allowed IP address(es) for HTTP(S) access to ingress"
-      }
-    },
     "instanceSize": {
       "type": "string",
-      "defaultValue": "Standard_NV6ads_A10_v5",
+      "defaultValue": "Standard_NV6",
       "metadata": {
         "description": "instance instance size"
       },
       "allowedValues": [
-        "Standard_B1ls",
-        "Standard_B1ms",
-        "Standard_B1s",
-        "Standard_B2ms",
-        "Standard_B2s",
-        "Standard_B4ms",
-        "Standard_B8ms",
+        "Standard_NV6",
         "Standard_NV6ads_A10_v5"
       ]
     },
@@ -104,7 +91,7 @@
     },
     "diskType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [
         "StandardSSD_LRS",
         "Standard_LRS",
@@ -125,25 +112,10 @@
       "metadata": {
         "description": "OS disk size"
       }
-    },
-    "diagsSASProperties": {
-      "type": "object",
-      "defaultValue": {
-        "signedServices": "bt",
-        "signedPermission": "rwlacu",
-        "signedStart": "[utcNow('yyyy-MM-ddTHH:mm:ssZ')]",
-        "signedExpiry": "[replace(utcNow('yyyy-MM-ddTHH:mm:ssZ'), utcNow('yyyy'), string(add(10,int(utcNow('yyyy')))))]",
-        "signedResourceTypes": "co"
-      },
-      "metadata": {
-        "description": "SAS token with 10-year lifetime for Linux diagnostics - currently unused until we re-enable extensions"
-      }
     }
   },
   "variables": {
-    "managedIdentityName": "[parameters('instancePrefix')]",
-    "diagsName": "[toLower(substring(concat('diags0',  uniqueString(resourceGroup().id)), 0, 16))]",
-    "virtualMachineContributor": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '9980e02c-c2be-4d73-94e8-173b1dc7cf3c')]"
+    "diagsName": "[toLower(substring(concat('diags0',  uniqueString(resourceGroup().id)), 0, 16))]"
   },
   "resources": [
     {
@@ -162,7 +134,7 @@
     {
       "comments": "Virtual Network",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "cluster",
+      "name": "compute",
       "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -173,15 +145,9 @@
         },
         "subnets": [
           {
-            "name": "instances",
+            "name": "default",
             "properties": {
               "addressPrefix": "10.1.0.0/16"
-            }
-          },
-          {
-            "name": "agents",
-            "properties": {
-              "addressPrefix": "10.2.0.0/16"
             }
           }
         ]
@@ -216,8 +182,8 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
-            "offer": "[if(equals(parameters('enableNVIDIA'),'true'), ' 0001-com-ubuntu-minimal-bionic','0001-com-ubuntu-minimal-jammy')]",
-            "sku": "[if(equals(parameters('enableNVIDIA'),'true'), 'minimal-18_04-lts-gen2','minimal-22_04-lts-gen2')]",
+            "offer": "0001-com-ubuntu-server-focal",
+            "sku": "[if(equals(parameters('instanceSize'),'Standard_NV6'),'20_04-lts','20_04-lts-gen2')]",
             "version": "latest"
           },
           "osDisk": {
@@ -248,11 +214,11 @@
           }
         }
       },
+      "resources": [],
       "dependsOn": [
-        "[resourceID('Microsoft.ManagedIdentity/userAssignedIdentities', variables('managedIdentityName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', 'cluster')]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('instancePrefix'), copyIndex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', 'masters')]",
+        "[concat('Microsoft.Network/virtualNetworks/', 'compute')]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('instancePrefix'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', 'compute')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
       ]
     },
@@ -281,10 +247,9 @@
             "name": "ipconfig1",
             "properties": {
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'cluster'), '/subnets/', 'compute')]"
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', 'compute'), '/subnets/', 'default')]"
               },
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat('10.1.0.1')]",
+              "privateIPAllocationMethod": "dynamic",
               "publicIpAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('instancePrefix'))]"
               }
