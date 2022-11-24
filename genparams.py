@@ -73,14 +73,14 @@ params = {
     "instanceManagementAllowedSourceAddressPrefixes": { 
         "value": allowed_management_ips
     },
-    "instanceIngressAllowedSourceAddressPrefixes": { 
-        "value": allowed_ingress_ips
-    },
     "instanceCustomData": {
         "value": slurp("cloud-init.yml")
     },
     "instanceSize": {
         "value": environ.get('COMPUTE_SKU', 'Standard_NV6ads_A10_v5')
+    },
+    "instancePrefix": {
+        "value": environ.get('COMPUTE_INSTANCE', 'ubuntu')
     },
     "instancePriority": {
         "value": environ.get('COMPUTE_PRIORITY', 'Spot')

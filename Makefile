@@ -1,11 +1,13 @@
 # Set environment variables
 export COMPUTE_GROUP?=gpu-compute
 export STORAGE_GROUP?=gpu-storage
-export LOCATION?=westeu
+export LOCATION?=westeurope
 export COMPUTE_COUNT?=3
+export COMPUTE_SKU?=Standard_NV6
 export COMPUTE_SKU?=Standard_NV6ads_A10_v5
 export COMPUTE_PRIORITY?=Spot
-export COMPUTE_FQDN=$(COMPUTE_GROUP)-gpu.$(LOCATION).cloudapp.azure.com
+export COMPUTE_INSTANCE?=gpu
+export COMPUTE_FQDN=$(COMPUTE_GROUP)-$(COMPUTE_INSTANCE).$(LOCATION).cloudapp.azure.com
 export VMSS_NAME=agents
 export ADMIN_USERNAME?=me
 export TIMESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
@@ -121,7 +123,7 @@ ssh:
 	-L 9080:localhost:80 \
 	-L 9081:localhost:81 \
 	-L 8080:localhost:8080 \
-	-L 4040:localhost:4040 \
+	-L 8888:localhost:8888 \
 	-L 5000:localhost:5000
 
 tail-cloud-init:
