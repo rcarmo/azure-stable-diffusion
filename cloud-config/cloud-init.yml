@@ -41,8 +41,19 @@ write_files:
       echo "--> Installing NVIDIA drivers"
       ubuntu-drivers autoinstall
       apt-get install -y nvidia-cuda-toolkit
+
+      #echo "--> Installing Python 3.10"
+      #apt-get install -y software-properties-common
+      #add-apt-repository ppa:deadsnakes/ppa -y
+      #apt-get install python3.10 python3.10-dev python3.10-venv python3.10-distutils
+      #update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+      
       echo "--> Installing Stable Diffusion toolkit"
-      pip3 install jupyterlab imaginairy==6.0.0a0 --upgrade
+      pip3 install jupyterlab ipywidgets markupsafe==2.0.1 imaginairy==6.0.0a0 --upgrade
+      echo "--> Redirecting model cache to file share (loading will be slower)"
+      mkdir -p /srv/.cache
+      rm -rf /home/${ADMIN_USER}/.cache
+      ln -s /srv/.cache /home/${ADMIN_USER}/.cache
       echo "==> Preflight done."
 
   - path: /root/controlled-shutdown.sh
@@ -128,8 +139,6 @@ packages:
   - htop
   - make
   - ntp
-  - python3-bottle
-  - python3-pip
   - stow
   - sudo
   - tmux
@@ -140,3 +149,4 @@ packages:
 runcmd:
   - systemctl enable spot-helper
   - /root/preflight.sh
+  - reboot
