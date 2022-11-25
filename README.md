@@ -6,7 +6,7 @@ A quick hack to run Stable Diffusion on an Azure GPU Spot Instance.
 
 This is an Azure Resource Manager template that automatically deploys a GPU enabled spot atop Ubuntu 20.04. 
 
-The template defaults to deploying NV6 Series VMs (`Standard_NV6` or, if you can get them, `Standard_NV6ads_A10_v5`) with the smallest possible managed SSD disk size (P4, 32GB). It also deploys (and mounts) an Azure File Share on the machine with (very) permissive access at `/srv`, which makes it quite easy to keep copies of your work between VM instantiations.
+The template defaults to deploying NV6 Series VMs (`Standard_NV6`, `Standard_NV6_Promo` or, if you can get them, `Standard_NV6ads_A10_v5`) with the smallest possible managed SSD disk size (P4, 32GB). It also deploys (and mounts) an Azure File Share on the machine with (very) permissive access at `/srv`, which makes it quite easy to keep copies of your work between VM instantiations.
 
 ## Why
 
@@ -14,12 +14,26 @@ I was getting a little bored with the notebook workflow in [Google Collab][colla
 
 ## Roadmap
 
-* [ ] change instance type to `Spot` for lower cost
+* [x] change instance type to `Spot` for lower cost (also, removed availability set and changed SKU to be non-`_Promo`)
 * [x] Install NVIDIA drivers and CUDA toolkit
 * [x] remove unused packages from `cloud-config`
 * [x] remove unnecessary commands from `Makefile`
 * [x] remove unnecessary files from repo and trim history
 * [x] fork from [`azure-k3s-cluster`][aks], new `README`
+
+## Cheapest Spots
+
+Go to the [Azure Resource Graph Explorer](https://portal.azure.com/?feature.customportal=false#view/HubsExtension/ArgQueryBlade) and enter this query to find the cheapest SKU/location combo for spot instances:
+
+```
+SpotResources 
+| where type =~ 'microsoft.compute/skuspotpricehistory/ostype/location' 
+| where sku.name in~ ('Standard_NV6','Standard_NV6ads_A10_v5') 
+| where properties.osType =~ 'linux' 
+| where location in~ ('westeurope','northeurope','eastus','eastus2') 
+| project skuName = tostring(sku.name), osType = tostring(properties.osType), location, latestSpotPriceUSD = todouble(properties.spotPrices[0].priceUSD) 
+| order by latestSpotPriceUSD asc 
+```
 
 ## `Makefile` commands
 
@@ -64,7 +78,7 @@ TODO
 
 ## NVIDIA Support
 
-Although it is possible to run machines like `Standard_NV6ads_A10_v5` as spot instances, this should be considered experimental.
+Although it is possible to run SKUs like `Standard_NV6ads_A10_v5` as spot instances, this should be considered experimental.
 
 ## Deployment Notes
 

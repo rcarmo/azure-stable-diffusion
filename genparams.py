@@ -77,7 +77,7 @@ params = {
         "value": slurp("cloud-init.yml")
     },
     "instanceSize": {
-        "value": environ.get('COMPUTE_SKU', 'Standard_NV6ads_A10_v5')
+        "value": environ.get('COMPUTE_SKU', 'Standard_NV6_Promo')
     },
     "instancePrefix": {
         "value": environ.get('COMPUTE_INSTANCE', 'ubuntu')

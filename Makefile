@@ -1,14 +1,14 @@
 # Set environment variables
 export COMPUTE_GROUP?=gpu-compute
 export STORAGE_GROUP?=gpu-storage
-export LOCATION?=westeurope
+export LOCATION?=eastus
 export COMPUTE_COUNT?=3
-export COMPUTE_SKU?=Standard_NV6
-export COMPUTE_SKU?=Standard_NV6ads_A10_v5
+export COMPUTE_SKU=Standard_NV6ads_A10_v5
+export COMPUTE_SKU=Standard_NV6_Promo
+export COMPUTE_SKU=Standard_NV6
 export COMPUTE_PRIORITY?=Spot
 export COMPUTE_INSTANCE?=gpu
 export COMPUTE_FQDN=$(COMPUTE_GROUP)-$(COMPUTE_INSTANCE).$(LOCATION).cloudapp.azure.com
-export VMSS_NAME=agents
 export ADMIN_USERNAME?=me
 export TIMESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
 export FILE_SHARES=config data models
