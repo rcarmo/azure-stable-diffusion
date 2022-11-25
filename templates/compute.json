@@ -18,19 +18,20 @@
     },
     "instanceManagementAllowedSourceAddressPrefixes": {
       "type": "array",
-      "defaultValue": ["*"],
+      "defaultValue": [ "*" ],
       "metadata": {
         "description": "Allowed IP address(es) for SSH access"
       }
     },
     "instanceSize": {
       "type": "string",
-      "defaultValue": "Standard_NV6",
+      "defaultValue": "Standard_NV6_Promo",
       "metadata": {
         "description": "instance instance size"
       },
       "allowedValues": [
         "Standard_NV6",
+        "Standard_NV6_Promo",
         "Standard_NV6ads_A10_v5"
       ]
     },
@@ -91,7 +92,7 @@
     },
     "diskType": {
       "type": "string",
-      "defaultValue": "Premium_LRS",
+      "defaultValue": "StandardSSD_LRS",
       "allowedValues": [
         "StandardSSD_LRS",
         "Standard_LRS",
@@ -160,6 +161,11 @@
       "apiVersion": "2019-03-01",
       "location": "[resourceGroup().location]",
       "properties": {
+        "priority": "[parameters('instancePriority')]",
+        "evictionPolicy": "Deallocate",
+        "billingProfile": {
+          "maxPrice": -1
+        },
         "osProfile": {
           "computerName": "[parameters('instancePrefix')]",
           "adminUsername": "[parameters('adminUsername')]",
@@ -183,7 +189,7 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "0001-com-ubuntu-server-focal",
-            "sku": "[if(equals(parameters('instanceSize'),'Standard_NV6'),'20_04-lts','20_04-lts-gen2')]",
+            "sku": "[if(contains(parameters('instanceSize'),'Standard_NV6'),'20_04-lts','20_04-lts-gen2')]",
             "version": "latest"
           },
           "osDisk": {
@@ -204,9 +210,6 @@
             }
           ]
         },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'compute')]"
-        },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
@@ -218,22 +221,8 @@
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'compute')]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('instancePrefix'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', 'compute')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('diagsName'))]"
       ]
-    },
-    {
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "compute",
-      "sku": {
-        "name": "Aligned"
-      },
-      "apiVersion": "2019-03-01",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "platformFaultDomainCount": 1,
-        "platformUpdateDomainCount": 1
-      }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
