@@ -54,6 +54,8 @@ write_files:
       mkdir -p /srv/.cache
       rm -rf /home/${ADMIN_USER}/.cache
       ln -s /srv/.cache /home/${ADMIN_USER}/.cache
+      echo "--> Installing Tailscale"
+      curl -fsSL https://tailscale.com/install.sh | sh
       echo "==> Preflight done."
 
   - path: /root/controlled-shutdown.sh
@@ -133,18 +135,21 @@ mounts:
     - vers=3.0,username=${STORAGE_ACCOUNT_NAME},password=${STORAGE_ACCOUNT_KEY},dir_mode=0770,file_mode=0660,uid=1000,gid=1000,noperm,noatime,mfsymlinks,iocharset=utf8
 
 packages:
+  - build-essential
   - curl
   - docker.io
   - fail2ban
   - htop
   - make
   - ntp
+  - python3-dev
+  - python3-pip
+  - python3-venv
   - stow
   - sudo
   - tmux
-  - vim
   - ubuntu-drivers-common
-  - build-essential
+  - vim
   
 runcmd:
   - systemctl enable spot-helper
