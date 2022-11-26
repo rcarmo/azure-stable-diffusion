@@ -14,6 +14,9 @@ I was getting a little bored with the notebook workflow in [Google Collab][colla
 
 ## Roadmap
 
+* [ ] Experimental [imaginAIry](https://github.com/brycedrennan/imaginAIry) installation
+* [ ] Set up Tailscale to remove need for Gradio
+* [x] Set up [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
 * [x] change instance type to `Spot` for lower cost (also, removed availability set and changed SKU to be non-`_Promo`)
 * [x] Install NVIDIA drivers and CUDA toolkit
 * [x] remove unused packages from `cloud-config`
@@ -72,10 +75,6 @@ SpotResources
 * The [Azure CLI][az] (`pip install -U -r requirements.txt` will install it)
 * GNU `make` (you can just read through the `Makefile` and type the commands yourself)
 
-## Internals
-
-TODO
-
 ## NVIDIA Support
 
 Although it is possible to run SKUs like `Standard_NV6ads_A10_v5` as spot instances, this should be considered experimental.
@@ -86,7 +85,7 @@ Although it is possible to run SKUs like `Standard_NV6ads_A10_v5` as spot instan
 
 ## Disclaimers
 
-Keep in mind that this was written for conciseness and ease of experimentation -- this is not meant to be used as a production service.
+Keep in mind that this is not meant to be used as a production service.
 
 [k3s]: https://github.com/rcarmo/azure-k3s-cluster
 [d]: http://docker.com
