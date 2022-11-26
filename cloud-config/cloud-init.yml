@@ -25,6 +25,10 @@ write_files:
       apt-get update
       apt-get dist-upgrade -y
       apt-get autoremove -y
+
+      echo "--> Installing Tailscale"
+      curl -fsSL https://tailscale.com/install.sh | sh
+
       echo "--> Installing NVIDIA drivers"
       ubuntu-drivers autoinstall
       apt-get install -y nvidia-cuda-toolkit
@@ -34,6 +38,7 @@ write_files:
       add-apt-repository ppa:deadsnakes/ppa -y
       apt-get install -y python3.10 python3.10-dev python3.10-venv python3.10-distutils
       update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
+      update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
 
       echo "--> Setting up scratch"
       mkdir -p /mnt/scratch
@@ -52,15 +57,16 @@ write_files:
       wget -q -O model.ckpt https://raw.githubusercontent.com/TheLastBen/fast-stable-diffusion/main/precompiled/attention.py
       source ~/stable-diffusion-webui/venv/bin/activate
 
-      echo "--> Downloading xformers"
-      cd ~/stable-diffusion-webui
-      mkdir repositories
-      cd repositories
-      git clone https://github.com/facebookresearch/xformers.git
-      cd xformers
-      git submodule update --init --recursive
-      pip install -r requirements.txt
-      pip install -e .
+      # Temporarily disabled
+      #echo "--> Downloading xformers"
+      #cd ~/stable-diffusion-webui
+      #mkdir repositories
+      #cd repositories
+      #git clone https://github.com/facebookresearch/xformers.git
+      #cd xformers
+      #git submodule update --init --recursive
+      #pip install -r requirements.txt
+      #pip install -e .
 
       echo "--> Downloading Huggingface data"
       cd /mnt/scratch
@@ -97,8 +103,6 @@ write_files:
       git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui-aesthetic-gradients extensions/aesthetic-gradients
       EOF
 
-      echo "--> Installing Tailscale"
-      curl -fsSL https://tailscale.com/install.sh | sh
       echo "==> Preflight done."
 
   - path: /root/controlled-shutdown.sh
