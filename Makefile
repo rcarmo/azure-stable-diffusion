@@ -14,6 +14,7 @@ export TIMESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
 export FILE_SHARES=config data models
 export STORAGE_ACCOUNT_NAME?=shared0$(shell echo $(COMPUTE_FQDN)|shasum|base64|tr '[:upper:]' '[:lower:]'|cut -c -16)
 export SHARE_NAME?=data
+export HUGGINGFACE_TOKEN?=DEFINEME
 export SSH_PORT?=2211
 # This will set both your management and ingress NSGs to your public IP address 
 # - since using "*" in an NSG may be disabled by policy
@@ -122,9 +123,9 @@ ssh:
 	$(SSH_TO_MASTER) \
 	-L 9080:localhost:80 \
 	-L 9081:localhost:81 \
-	-L 8080:localhost:8080 \
+	-L 0.0.0.0:8080:localhost:8080 \
 	-L 8888:localhost:8888 \
-	-L 5000:localhost:5000
+	-L 7860:localhost:7860
 
 tail-cloud-init:
 	-cat keys/$(ADMIN_USERNAME).pem | ssh-add -k -
