@@ -4,7 +4,7 @@ A quick hack to run Stable Diffusion on an Azure GPU Spot Instance.
 
 ## What
 
-This is an Azure Resource Manager template that automatically deploys a GPU enabled spot atop Ubuntu 20.04. 
+This is an Azure Resource Manager template that automatically deploys a GPU enabled spot instance running Ubuntu 20.04. 
 
 The template defaults to deploying NV6 Series VMs (`Standard_NV6`, `Standard_NV6_Promo` or, if you can get them, `Standard_NV6ads_A10_v5`) with the smallest possible managed SSD disk size (P4, 32GB). It also deploys (and mounts) an Azure File Share on the machine with (very) permissive access at `/srv`, which makes it quite easy to keep copies of your work between VM instantiations.
 
