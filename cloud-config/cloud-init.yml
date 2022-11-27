@@ -94,8 +94,8 @@ write_files:
       echo "--> Converting Stable Diffusion 1.5 inpainting model"
       MODEL_PATH=stable-diffusion-inpainting CHECKPOINT_PATH=/home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/runwayml-sd-v1-5-inpainting.ckpt python3 convertosd.py
       echo "--> Copying Stable Diffusion 2.0 model"
-      wget -O /home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/stabilityai-sd-v2.yaml https://raw.githubusercontent.com/Stability-AI/stablediffusion/main/configs/stable-diffusion/v2-inference-v.yaml
-      cp stable-diffusion-2/768-v-ema.ckpt /home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/stabilityai-sd-v2.ckpt
+      wget -O /home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/768-v-ema.yaml https://raw.githubusercontent.com/Stability-AI/stablediffusion/main/configs/stable-diffusion/v2-inference-v.yaml
+      cp stable-diffusion-2/768-v-ema.ckpt /home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/768-v-ema.ckpt
  
       echo "--> installing Extensions"
       cd ~/stable-diffusion-webui
