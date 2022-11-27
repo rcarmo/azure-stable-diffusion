@@ -19,7 +19,7 @@ I was getting a little bored with the notebook workflow in [Google Collab][colla
 * [ ] Automatically set up Tailscale with `--authkey` to remove need for Gradio
 * [ ] Built-in auto-shutdown (easy to set via the portal, but I will be adding it to the template)
 * [x] Experimental [imaginAIry](https://github.com/brycedrennan/imaginAIry) installation (just use `experimental.yaml` instead of `cloud-init.yaml`)
-* [x] Set up [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
+* [x] Set up [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)'s pretty amazing Web UI
 * [x] change instance type to `Spot` for lower cost (also, removed availability set and changed SKU to be non-`_Promo`)
 * [x] Install NVIDIA drivers and CUDA toolkit
 * [x] remove unused packages from `cloud-config`
