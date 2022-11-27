@@ -57,8 +57,8 @@ write_files:
       bash <(wget -qO- https://raw.githubusercontent.com/AUTOMATIC1111/stable-diffusion-webui/master/webui.sh)
       cd ~/stable-diffusion-webui
       # Make generated content persistent in the mounted file share so we can destroy the VM at will
-      mkdir -p /srv/content
-      ln -s /srv/content content
+      mkdir -p /srv/outputs
+      ln -s /srv/outputs outputs
       cd ~/stable-diffusion-webui/models/Stable-diffusion
       echo "--> Downloading precompiled attention model"
       wget -q -O model.ckpt https://raw.githubusercontent.com/TheLastBen/fast-stable-diffusion/main/precompiled/attention.py
