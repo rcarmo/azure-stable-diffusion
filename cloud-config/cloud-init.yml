@@ -27,6 +27,7 @@ write_files:
       apt-get autoremove -y
 
       echo "--> Installing Tailscale"
+      # Note: this is handy for easier remote access
       curl -fsSL https://tailscale.com/install.sh | sh
 
       echo "--> Installing NVIDIA drivers"
@@ -38,12 +39,14 @@ write_files:
       add-apt-repository ppa:deadsnakes/ppa -y
       apt-get install -y python3.10 python3.10-dev python3.10-venv python3.10-distutils
       update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
-      update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
+      # Note: this breaks Ubuntu subtly, so make sure to run all apt installs previously
 
       echo "--> Setting up scratch"
+      # Make sure we can write to the temporary SSD storage
       mkdir -p /mnt/scratch
       chmod a+w /mnt/scratch
       
+      # Everything from here on down is run as a regular user
       sudo -i -u ${ADMIN_USERNAME} bash << EOF
       echo "--> Setting up cache"
       rm -rf ~/.cache
@@ -52,51 +55,48 @@ write_files:
 
       echo "--> Cloning repositories"
       bash <(wget -qO- https://raw.githubusercontent.com/AUTOMATIC1111/stable-diffusion-webui/master/webui.sh)
+      cd ~/stable-diffusion-webui
+      # Make generated content persistent in the mounted file share so we can destroy the VM at will
+      mkdir -p /srv/content
+      ln -s /srv/content content
       cd ~/stable-diffusion-webui/models/Stable-diffusion
       echo "--> Downloading precompiled attention model"
       wget -q -O model.ckpt https://raw.githubusercontent.com/TheLastBen/fast-stable-diffusion/main/precompiled/attention.py
       source ~/stable-diffusion-webui/venv/bin/activate
 
-      # Temporarily disabled
-      #echo "--> Downloading xformers"
-      #cd ~/stable-diffusion-webui
-      #mkdir repositories
-      #cd repositories
-      #git clone https://github.com/facebookresearch/xformers.git
-      #cd xformers
-      #git submodule update --init --recursive
-      #pip install -r requirements.txt
-      #pip install -e .
-
       echo "--> Downloading Huggingface data"
       cd /mnt/scratch
       git init
-      git lfs install
+      git lfs install --skip-repo
+      git config core.sparsecheckout true
+      echo "--> RunwayML SD 1.5"
       git clone --branch fp16 "https://USER:${HUGGINGFACE_TOKEN}@huggingface.co/runwayml/stable-diffusion-v1-5"
       git clone --branch fp16 "https://USER:${HUGGINGFACE_TOKEN}@huggingface.co/runwayml/stable-diffusion-inpainting"
+      echo "--> StabilityAI Autoencoders"
       git clone "https://USER:${HUGGINGFACE_TOKEN}@huggingface.co/stabilityai/sd-vae-ft-mse"
+      echo "--> StabilityAI SD 2.0"
+      git clone --branch fp16 "https://USER:${HUGGINGFACE_TOKEN}@huggingface.co/stabilityai/stable-diffusion-2"
 
-      echo "--> Patching"
+      echo "--> Patching SD 1.5 with Autoencoders"
       rm -r stable-diffusion-v1-5/vae
       rm -r stable-diffusion-inpainting/vae
       cp -r sd-vae-ft-mse stable-diffusion-v1-5/vae        
       mv sd-vae-ft-mse stable-diffusion-inpainting/vae
-
-      echo "--> Converting Stable Diffusion model"
+      
+      # Retrieve and patch the model converter in a sane fashion
       wget -O convertosd.py https://github.com/TheLastBen/fast-stable-diffusion/raw/main/Dreambooth/convertosd.py
-      cp convertosd.py original.py
-      sed -i '201s@.*@    model_path = "stable-diffusion-v1-5"@' convertosd.py
-      sed -i '202s@.*@    checkpoint_path= "/home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/model.ckpt"@' convertosd.py
-      python convertosd.py
-      rm -rf stable-diffusion-v1-5
-      echo "--> Converting Stable Diffusion inpainting model"
-      cp original.py convertosd.py
-      sed -i '201s@.*@    model_path = "stable-diffusion-inpainting"@' convertosd.py
-      sed -i '202s@.*@    checkpoint_path= "/home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/sd-v1-5-inpainting.ckpt"@' convertosd.py
-      python convertosd.py
-      echo "--> Clean up"
-      rm -rf .git stable-diffusion-inpainting
+      sed -i '8s@.*@import os@' convertosd.py
+      sed -i '201s@.*@    model_path = os.environ["MODEL_PATH"]@' convertosd.py
+      sed -i '202s@.*@    checkpoint_path = os.environ["CHECKPOINT_PATH"]@' convertosd.py
 
+      echo "--> Converting Stable Diffusion 1.5 model"
+      MODEL_PATH=stable-diffusion-v1-5 CHECKPOINT_PATH=/home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/runwayml-sd-v1-5.ckpt python3 convertosd.py
+      echo "--> Converting Stable Diffusion 1.5 inpainting model"
+      MODEL_PATH=stable-diffusion-inpainting CHECKPOINT_PATH=/home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/runwayml-sd-v1-5-inpainting.ckpt python3 convertosd.py
+      echo "--> Copying Stable Diffusion 2.0 model"
+      wget -O /home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/stabilityai-sd-v2.yaml https://raw.githubusercontent.com/Stability-AI/stablediffusion/main/configs/stable-diffusion/v2-inference-v.yaml
+      cp stable-diffusion-2/768-v-ema.ckpt /home/${ADMIN_USERNAME}/stable-diffusion-webui/models/Stable-diffusion/stabilityai-sd-v2.ckpt
+ 
       echo "--> installing Extensions"
       cd ~/stable-diffusion-webui
       git clone https://github.com/yfszzx/stable-diffusion-webui-images-browser extensions/stable-diffusion-webui-images-browser
@@ -186,6 +186,7 @@ packages:
   - curl
   - fail2ban
   - git-lfs
+  - golang
   - htop
   - make
   - net-tools

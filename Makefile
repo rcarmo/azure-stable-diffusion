@@ -92,7 +92,7 @@ deploy-compute:
 redeploy:
 	-make destroy-compute
 	make params
-	while [[ $$(az group list | grep Deleting) =~ "Deleting" ]]; do sleep 30; done
+	while [[ $$(az group list | grep Deleting) =~ "Deleting" ]]; do sleep 15; done
 	make deploy-compute
 
 # create a set of SMB shares on the storage account

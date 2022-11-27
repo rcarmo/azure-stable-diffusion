@@ -8,6 +8,8 @@ This is an Azure Resource Manager template that automatically deploys a GPU enab
 
 The template defaults to deploying NV6 Series VMs (`Standard_NV6`, `Standard_NV6_Promo` or, if you can get them, `Standard_NV6ads_A10_v5`) with the smallest possible managed SSD disk size (P4, 32GB). It also deploys (and mounts) an Azure File Share on the machine with (very) permissive access at `/srv`, which makes it quite easy to keep copies of your work between VM instantiations.
 
+You will need to set a `HUGGINGFACE_TOKEN` environment variable when running the `Makefile`, and the machine will reboot after installing _almost_ everything (it will automatically install `GFPGAN` and other auxiliary models when you run `webui.sh --listen` the first time).
+
 ## Why
 
 I was getting a little bored with the notebook workflow in [Google Collab][collab] and wanted access to a more persistent GPU setup without breaking the bank (hence spot instances, which I can run on demand in my personal subscription).
@@ -15,7 +17,7 @@ I was getting a little bored with the notebook workflow in [Google Collab][colla
 ## Roadmap
 
 * [ ] Experimental [imaginAIry](https://github.com/brycedrennan/imaginAIry) installation
-* [ ] Set up Tailscale to remove need for Gradio
+* [ ] Automatically set up Tailscale with `--authkey` to remove need for Gradio
 * [x] Set up [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
 * [x] change instance type to `Spot` for lower cost (also, removed availability set and changed SKU to be non-`_Promo`)
 * [x] Install NVIDIA drivers and CUDA toolkit
