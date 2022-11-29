@@ -37,7 +37,7 @@ class Main(App):
     def compose(self) -> ComposeResult:
         global status
         """Create child widgets for the app."""
-        status = loads(check_output("make get-vm-details", shell=True))[0]
+        status = loads(check_output("make -s get-vm-details", shell=True))[0]
         yield Header()
         yield Footer()
         yield Container(VMStatus(), IPStatus())
