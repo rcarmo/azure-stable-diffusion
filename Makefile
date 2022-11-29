@@ -134,7 +134,7 @@ tail-cloud-init:
 
 # View deployment details
 view-deployment:
-	az group deployment operation list \
+	az deployment operation group list \
 		--resource-group $(COMPUTE_GROUP) \
 		--name cli-$(LOCATION) \
 		--query "[].{OperationID:operationId,Name:properties.targetResource.resourceName,Type:properties.targetResource.resourceType,State:properties.provisioningState,Status:properties.statusCode}" \
