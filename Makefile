@@ -35,7 +35,7 @@ SSH_TO_MASTER:=ssh -p $(SSH_PORT) -q -A -i keys/$(SSH_KEY) $(ADMIN_USERNAME)@$(C
 tui:
 	@echo "Checking requirements..."
 	@-[[ ! `pip list | grep textual` ]] && pip install --upgrade textual
-	python3 tui.py
+	python -m tui
 
 
 # dump resource groups
