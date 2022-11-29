@@ -74,6 +74,8 @@ SpotResources
 
 ## Requirements
 
+[Azure Cloud Shell](https://shell.azure.com/) (which includes all the below in `bash` mode) or:
+
 * [Python 3][p]
 * The [Azure CLI][az] (`pip install -U -r requirements.txt` will install it)
 * GNU `make` (you can just read through the `Makefile` and type the commands yourself)

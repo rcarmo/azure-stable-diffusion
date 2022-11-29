@@ -153,3 +153,12 @@ list-endpoints:
 		--query '[].{dnsSettings:dnsSettings.fqdn}' \
 		--output table
 
+# TUI Dependencies
+tui-deps:
+	pip install --upgrade textual
+
+get-vm-details:
+	@az vm list \
+	--resource-group $(COMPUTE_GROUP) \
+	--show-details \
+	--output json
