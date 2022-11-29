@@ -31,12 +31,13 @@ SSH_KEY:=$(ADMIN_USERNAME).pem
 # Do not output warnings, do not validate or add remote host keys (useful when doing successive deployments or going through the load balancer)
 SSH_TO_MASTER:=ssh -p $(SSH_PORT) -q -A -i keys/$(SSH_KEY) $(ADMIN_USERNAME)@$(COMPUTE_FQDN) -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
+.PHONY: tui deploy-storage deploy-compute redeploy destroy-compute destroy-storage destroy-environment
+
 # Start TUI
 tui:
 	@echo "Checking requirements..."
 	@-[[ ! `pip list | grep textual` ]] && pip install --upgrade textual
 	python -m tui
-
 
 # dump resource groups
 list-resources:
