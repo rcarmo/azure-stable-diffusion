@@ -189,7 +189,7 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "0001-com-ubuntu-server-focal",
-            "sku": "[if(contains(parameters('instanceSize'),'Standard_NV6'),'20_04-lts','20_04-lts-gen2')]",
+            "sku": "[if(contains(parameters('instanceSize'),'_v'),'20_04-lts-gen2','20_04-lts')]",
             "version": "latest"
           },
           "osDisk": {
