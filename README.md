@@ -25,7 +25,7 @@ I was getting a little bored with the notebook workflow in [Google Collab][colla
 * [x] remove unused packages from `cloud-config`
 * [x] remove unnecessary commands from `Makefile`
 * [x] remove unnecessary files from repo and trim history
-* [x] fork from [`azure-k3s-cluster`][aks], new `README`
+* [x] fork from [`azure-k3s-cluster`][k3s], new `README`
 
 ## Cheapest Spots
 
